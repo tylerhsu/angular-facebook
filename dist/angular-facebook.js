@@ -14,6 +14,8 @@
   // and the `fbAsyncInit` function is called.
   var loadDeferred;
 
+  var sdkScript;
+
   /**
    * @name facebook
    * @kind function
@@ -260,6 +262,10 @@
             function NgFacebook() {
               this.appId = settings.appId;
             }
+
+            NgFacebook.prototype.loadScript = function() {
+              loadSdkScript();
+            };
 
             /**
              * Ready state method
@@ -527,34 +533,30 @@
           return fbroot;
         })();
 
+        (function injectScript() {
+          sdkScript        = document.createElement('script');
+          sdkScript.id     = 'facebook-jssdk';
+          sdkScript.async  = true;
+
+          sdkScript.onload = function() {
+            flags.sdk = true;
+          };
+
+          // Fix for IE < 9, and yet supported by latest browsers
+          document.getElementsByTagName('head')[0].appendChild(sdkScript);
+        })();
+
         /**
          * SDK script injecting
          */
          if(loadSDK) {
-          (function injectScript() {
-            var src           = '//connect.facebook.net/' + settings.locale + '/sdk.js',
-                script        = document.createElement('script');
-                script.id     = 'facebook-jssdk';
-                script.async  = true;
-
-            // Prefix protocol
-            // for sure we don't want to ignore things, but this tests exists,
-            // but it isn't recognized by istanbul, so we give it a 'ignore if'
-            /* istanbul ignore if */
-            if ($window.location.protocol.indexOf('file:') !== -1) {
-              src = 'https:' + src;
-            }
-
-            script.src = src;
-            script.onload = function() {
-              flags.sdk = true;
-            };
-
-            // Fix for IE < 9, and yet supported by latest browsers
-            document.getElementsByTagName('head')[0].appendChild(script);
-          })();
+           loadSdkScript();
         }
       }
     ]);
+
+  function loadSdkScript() {
+    sdkScript.src = '//connect.facebook.net/' + settings.locale + '/sdk.js';
+  }
 
 })(window, angular);
